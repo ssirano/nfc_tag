@@ -26,6 +26,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String tagInfo = "No NFC tag read yet";
   bool tagAvailable = false;
   Ndef? ndefInstance;
 
@@ -52,7 +53,6 @@ class _MyHomePageState extends State<MyHomePage> {
     logger.d("NFC session started");
     NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
       Ndef? ndef = Ndef.from(tag);
-
       final id = tag.data['id'];
       final type = tag.data['type'];
       logger.d('Tag ID: $id');
@@ -64,9 +64,14 @@ class _MyHomePageState extends State<MyHomePage> {
         return;
       }
 
+      final ndefMessage = ndef.cachedMessage?.records.map((record) {
+        return String.fromCharCodes(record.payload);
+      }).join(', ');
+
       setState(() {
         tagAvailable = true;
         ndefInstance = ndef;
+        tagInfo = "Tag ID: $id\nTag Type: $type\nTag Content: $ndefMessage";
       });
 
       if (ndef.isWritable) {
@@ -87,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text(tagInfo),
             ElevatedButton(
               onPressed: () {
                 _startNfcSession();
